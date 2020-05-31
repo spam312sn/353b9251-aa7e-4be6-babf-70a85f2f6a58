@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Paydo\Util;
 
 use Enuage\SchemaValidator\Configuration\StructureConfiguration;
+use Enuage\SchemaValidator\Constraint\ArrayConstraint;
+use Enuage\SchemaValidator\Constraint\StringConstraint;
 use Enuage\SchemaValidator\Validator\SchemaValidator;
 use Exception;
 use Paydo\Throwable\MissingQueryParameterException;
@@ -30,8 +32,30 @@ class RequestResolver
      */
     public static function getBaseCurrencyFromRequestQuery(array $params): Currency
     {
+        $params = self::validateRequest(
+            $params,
+            [
+                (new StringConstraint('baseCurrency', 0))->setRequired(), // TODO: `...->setAllowedValues()`
+            ]
+        );
+
+        return new Currency($params['baseCurrency']);
+    }
+
+    /**
+     * @param array $params
+     * @param array $constraints
+     *
+     * @return array
+     *
+     * @throws Exception
+     */
+    private static function validateRequest(array $params, array $constraints): array
+    {
         $schema = new StructureConfiguration('parameters');
-        $schema->addStringProperty('baseCurrency')->setRequired();
+        foreach ($constraints as $constraint) {
+            $schema->addConstraint($constraint);
+        }
 
         $schemaValidator = new SchemaValidator();
         $validationResult = $schemaValidator->validate($params, $schema);
@@ -40,7 +64,7 @@ class RequestResolver
             throw new MissingQueryParameterException($validationResult->getErrors()->first()->getPointer());
         }
 
-        return new Currency($params['baseCurrency']);
+        return $params;
     }
 
     /**
@@ -52,18 +76,18 @@ class RequestResolver
      */
     public static function getProductsFromRequestQuery(array $params): array
     {
-        $schema = new StructureConfiguration('parameters');
-        $schema->addArrayProperty('products')->setRequired(); // TODO: `...->multipleOf('string')`
+        $params = self::validateRequest(
+            $params,
+            [
+                (new ArrayConstraint('products', 0))->setRequired(), // TODO: `...->multipleOf('string')`
+            ]
+        );
 
-        $schemaValidator = new SchemaValidator();
-        $validationResult = $schemaValidator->validate($params, $schema);
-
-        if (false === $validationResult->isValid()) {
-            throw new MissingQueryParameterException($validationResult->getErrors()->first()->getPointer());
-        }
-
-        return array_map(function ($product) {
-            return new Product($product);
-        }, $params['products']);
+        return array_map(
+            function ($product) {
+                return new Product($product);
+            },
+            $params['products']
+        );
     }
 }
