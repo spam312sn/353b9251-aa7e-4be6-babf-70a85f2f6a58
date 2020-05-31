@@ -25,6 +25,7 @@ class RequestResolver
      * @param array $params
      *
      * @return Currency
+     *
      * @throws Exception
      */
     public static function getBaseCurrencyFromRequestQuery(array $params): Currency
@@ -61,11 +62,8 @@ class RequestResolver
             throw new MissingQueryParameterException($validationResult->getErrors()->first()->getPointer());
         }
 
-        return array_map(
-            function (&$product) {
-                return new Product($product);
-            },
-            $params['products']
-        );
+        return array_map(function ($product) {
+            return new Product($product);
+        }, $params['products']);
     }
 }

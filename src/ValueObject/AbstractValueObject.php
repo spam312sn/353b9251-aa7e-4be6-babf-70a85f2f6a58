@@ -7,6 +7,8 @@ namespace Paydo\ValueObject;
 use Exception;
 use Paydo\Throwable\ValueObject\AbstractInvalidValueException;
 
+use function strcmp;
+
 /**
  * Class AbstractValueObject
  *

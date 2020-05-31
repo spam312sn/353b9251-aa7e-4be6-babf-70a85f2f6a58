@@ -50,7 +50,13 @@ class BasicFilter
     public function __construct(DateTimeInterface $from, DateTimeInterface $to, array $products)
     {
         $this->dates = new DateDTO($from, $to);
-        $this->products = new PseudoGeneric(Product::class, Type::INTEGER_TYPE, $products);
+        $this->products = new PseudoGeneric(
+            Product::class,
+            Type::INTEGER_TYPE,
+            array_map(function ($productName) {
+                return new Product($productName);
+            }, $products)
+        );
 
         if (0 === intval($from->format('z')) && 363 < intval($to->format('z'))) {
             $modifier = '-1 year';
@@ -64,9 +70,15 @@ class BasicFilter
         $this->previousDates = new DateDTO(self::modifyDate($from, $modifier), self::modifyDate($to, $modifier),);
     }
 
-    private static function modifyDate(DateTimeInterface $date, string $period)
+    /**
+     * @param DateTimeInterface $date
+     * @param string $modifier
+     *
+     * @return DateTimeInterface
+     */
+    private static function modifyDate(DateTimeInterface $date, string $modifier): DateTimeInterface
     {
-        return DateTime::createFromFormat('Y-m-d', $date->format('Y-m-d'))->modify($period);
+        return DateTime::createFromFormat('Y-m-d', $date->format('Y-m-d'))->modify($modifier);
     }
 
     /**
@@ -86,7 +98,7 @@ class BasicFilter
     }
 
     /**
-     * @return PseudoGeneric
+     * @return PseudoGeneric<Product>|Product[]
      */
     public function getProducts(): PseudoGeneric
     {

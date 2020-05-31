@@ -9,6 +9,9 @@ use Aura\Sql\ExtendedPdo;
 use Exception;
 use Paydo\Throwable\MissingConfigException;
 
+use function str_contains;
+use function strtolower;
+
 /**
  * Class DatabaseConnectionProvider
  *
